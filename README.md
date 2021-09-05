@@ -6,7 +6,7 @@
 
 ![Rust 1.51](https://img.shields.io/static/v1?logo=Rust&label=&message=1.51&color=grey)
 [![CI](https://github.com/Tamschi/try-lazy-init/workflows/CI/badge.svg?branch=unstable)](https://github.com/Tamschi/try-lazy-init/actions?query=workflow%3ACI+branch%3Aunstable)
-![Crates.io - License](https://img.shields.io/crates/l/try-lazy-init/0.0.1)
+![Crates.io - License](https://img.shields.io/crates/l/try-lazy-init/0.0.2)
 
 [![GitHub](https://img.shields.io/static/v1?logo=GitHub&label=&message=%20&color=grey)](https://github.com/Tamschi/try-lazy-init)
 [![open issues](https://img.shields.io/github/issues-raw/Tamschi/try-lazy-init)](https://github.com/Tamschi/try-lazy-init/issues)
@@ -54,8 +54,26 @@ assert_eq!(
   lazy_transform.try_get_or_create(|_| { unreachable!(); Err(()) }),
   Ok(&2)
 );
+assert_eq!(
+  // Available also without `where T: Clone`.
+  // Already initialized so this closure doesn't run:
+  lazy_transform.get_or_create_or_poison(|_| { unreachable!(); Err(()) }),
+  Ok(&2)
+);
 assert_eq!(lazy_transform.get(), Some(&2));
 assert_eq!(lazy_transform.into_inner(), Ok(2));
+
+let lazy_transform_2 = LazyTransform::<_, ()>::new(1);
+assert_eq!(
+  // This poisons by error, which won't panic this method or `.try_into_inner`:
+  lazy_transform_2.get_or_create_or_poison(|_| Err(())),
+  Err(Some(()))
+);
+assert_eq!(
+  // The original value is now gone:
+  lazy_transform_2.try_into_inner(),
+  Err(None)
+);
 ```
 
 ## License
