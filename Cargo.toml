@@ -1,12 +1,38 @@
 [package]
 name = "try-lazy-init"
+version = "0.0.1"
 authors = ["Kyle Huey <khuey@kylehuey.com>", "Tamme Schichler <tamme@schichler.dev>"]
-description = "Lazy initialization."
-keywords = ["lazy", "initialization"]
+edition = "2018"
+description = "Fallible lazy initialization."
 license = "Apache-2.0/MIT"
 repository = "https://github.com/Tamschi/try-lazy-init"
-documentation = "https://docs.rs/try-lazy-init/0.4.0"
-version = "0.4.0"
+homepage = "https://github.com/Tamschi/try-lazy-init/tree/v0.0.1"
+documentation = "https://docs.rs/try-lazy-init/0.0.1"
+keywords = ["fallible", "lazy", "initialization"]
+categories = ["data-structures", "rust-patterns"]
+readme = "README.md"
+include = [
+	"**/*.rs",
+	"!tests/unincluded_*.rs", # Tests of meta data files not included in the package.
+	"Cargo.toml",
+	"CHANGELOG.md",
+	"CODE_OF_CONDUCT.md",
+	"LICENSE-*",
+	"README.md",
+	"SECURITY.md",
+]
+resolver = "2"
+publish = false
+
+[badges]
+is-it-maintained-issue-resolution = { repository = "Tamschi/try-lazy-init" }
+is-it-maintained-open-issues = { repository = "Tamschi/try-lazy-init" }
+maintenance = { status = "experimental" } # This may differ between branches.
 
 [dev-dependencies]
+cargo-husky = "1.5.0"
+doc-comment = "0.3.3"
+git_info = "0.1.2"
 scoped-pool = "1.0.0"
+version-sync = "0.9.1"
+wasm-bindgen-test = "0.3.26"
