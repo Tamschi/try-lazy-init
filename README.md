@@ -26,7 +26,36 @@ cargo add try-lazy-init
 ## Example
 
 ```rust
-// TODO_EXAMPLE
+use try_lazy_init::{Lazy, LazyTransform};
+
+let lazy = Lazy::new();
+assert_eq!(
+  // Not yet initialized, so this closure runs:
+  lazy.get_or_create(|| 1),
+  &1
+);
+assert_eq!(
+  // Already initialized so this closure doesn't run:
+  lazy.try_get_or_create(|| { unreachable!(); Err(()) }),
+  Ok(&1)
+);
+assert_eq!(lazy.get(), Some(&1));
+assert_eq!(lazy.into_inner(), Some(1));
+
+let lazy_transform = LazyTransform::new(1);
+assert_eq!(
+  // Not yet initialized, so this closure runs:
+  lazy_transform.get_or_create(|x| x + 1),
+  &2
+);
+assert_eq!(
+  // Only available `where T: Clone`.
+  // Already initialized so this closure doesn't run:
+  lazy_transform.try_get_or_create(|_| { unreachable!(); Err(()) }),
+  Ok(&2)
+);
+assert_eq!(lazy_transform.get(), Some(&2));
+assert_eq!(lazy_transform.into_inner(), Ok(2));
 ```
 
 ## License
