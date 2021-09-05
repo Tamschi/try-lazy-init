@@ -2,9 +2,9 @@
 
 <!-- markdownlint-disable no-trailing-punctuation -->
 
-## next
+## 0.0.2
 
-TODO: Date
+2021-09-05
 
 - Features:
   - Added `LazyTransform` methods `.get_or_create_or_poison` and `.try_into_inner`.

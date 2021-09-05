@@ -1,13 +1,13 @@
 [package]
 name = "try-lazy-init"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Kyle Huey <khuey@kylehuey.com>", "Tamme Schichler <tamme@schichler.dev>"]
 edition = "2018"
 description = "Fallible lazy initialization."
 license = "Apache-2.0/MIT"
 repository = "https://github.com/Tamschi/try-lazy-init"
-homepage = "https://github.com/Tamschi/try-lazy-init/tree/v0.0.1"
-documentation = "https://docs.rs/try-lazy-init/0.0.1"
+homepage = "https://github.com/Tamschi/try-lazy-init/tree/v0.0.2"
+documentation = "https://docs.rs/try-lazy-init/0.0.2"
 keywords = ["fallible", "lazy", "initialization"]
 categories = ["data-structures", "rust-patterns"]
 readme = "README.md"

@@ -6,7 +6,7 @@
 
 ![Rust 1.51](https://img.shields.io/static/v1?logo=Rust&label=&message=1.51&color=grey)
 [![CI](https://github.com/Tamschi/try-lazy-init/workflows/CI/badge.svg?branch=develop)](https://github.com/Tamschi/try-lazy-init/actions?query=workflow%3ACI+branch%3Adevelop)
-![Crates.io - License](https://img.shields.io/crates/l/try-lazy-init/0.0.1)
+![Crates.io - License](https://img.shields.io/crates/l/try-lazy-init/0.0.2)
 
 [![GitHub](https://img.shields.io/static/v1?logo=GitHub&label=&message=%20&color=grey)](https://github.com/Tamschi/try-lazy-init)
 [![open issues](https://img.shields.io/github/issues-raw/Tamschi/try-lazy-init)](https://github.com/Tamschi/try-lazy-init/issues)
