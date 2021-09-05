@@ -22,7 +22,6 @@ include = [
 	"SECURITY.md",
 ]
 resolver = "2"
-publish = false
 
 [badges]
 is-it-maintained-issue-resolution = { repository = "Tamschi/try-lazy-init" }
