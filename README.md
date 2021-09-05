@@ -54,8 +54,26 @@ assert_eq!(
   lazy_transform.try_get_or_create(|_| { unreachable!(); Err(()) }),
   Ok(&2)
 );
+assert_eq!(
+  // Available also without `where T: Clone`.
+  // Already initialized so this closure doesn't run:
+  lazy_transform.get_or_create_or_poison(|_| { unreachable!(); Err(()) }),
+  Ok(&2)
+);
 assert_eq!(lazy_transform.get(), Some(&2));
 assert_eq!(lazy_transform.into_inner(), Ok(2));
+
+let lazy_transform_2 = LazyTransform::<_, ()>::new(1);
+assert_eq!(
+  // This poisons by error, which won't panic this method or `.try_into_inner`:
+  lazy_transform_2.get_or_create_or_poison(|_| Err(())),
+  Err(Some(()))
+);
+assert_eq!(
+  // The original value is now gone:
+  lazy_transform_2.try_into_inner(),
+  Err(None)
+);
 ```
 
 ## License

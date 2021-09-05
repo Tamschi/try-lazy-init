@@ -74,13 +74,34 @@ impl<T, U> LazyTransform<T, U> {
 	///
 	/// # Panics
 	///
-	/// Iff this instance has been poisoned due to a panic during transformation.
+	/// Iff this instance has been poisoned during transformation.
 	pub fn into_inner(self) -> Result<U, T> {
 		// We don't need to inspect `self.initialized` since `self` is owned
 		// so it is guaranteed that no other threads are accessing its data.
 		match self.value.into_inner().unwrap() {
 			ThisOrThat::This(t) => Err(t),
 			ThisOrThat::That(u) => Ok(u),
+		}
+	}
+
+	/// Unwrap the contained value, returning `Ok(Ok(U))` iff the `LazyTransform<T, U>` has been transformed.
+	///
+	/// # Errors
+	///
+	/// Iff this instance has neither been transformed yet nor poisoned, `Err(Some(T))` is returned.
+	///
+	/// Iff this instance has been poisoned *by error* during a call to [`.get_or_create_or_poison`](`LazyTransform::get_or_create_or_poison`), `Err(None)` is returned.
+	///
+	/// # Panics
+	///
+	/// Iff this instance has been poisoned *by a panic* during transformation.
+	pub fn try_into_inner(self) -> Result<U, Option<T>> {
+		// We don't need to inspect `self.initialized` since `self` is owned
+		// so it is guaranteed that no other threads are accessing its data.
+		match self.value.into_inner() {
+			None => Err(None),
+			Some(ThisOrThat::This(t)) => Err(Some(t)),
+			Some(ThisOrThat::That(u)) => Ok(u),
 		}
 	}
 }
@@ -98,7 +119,7 @@ impl<T, U> LazyTransform<T, U> {
 	///
 	/// # Panics
 	///
-	/// This method will panic if the instance has been poisoned due to a panic during a previous transformation attempt.
+	/// This method will panic if the instance has been poisoned during a previous transformation attempt.
 	///
 	/// The method **may** panic (or deadlock) upon reentrance.
 	pub fn get_or_create<F>(&self, f: F) -> &U
@@ -147,7 +168,7 @@ impl<T, U> LazyTransform<T, U> {
 	///
 	/// # Panics
 	///
-	/// This method will panic if the instance has been poisoned due to a panic during a previous transformation attempt.
+	/// This method will panic if the instance has been poisoned during a previous transformation attempt.
 	///
 	/// The method **may** panic (or deadlock) upon reentrance.
 	pub fn try_get_or_create<F, E>(&self, f: F) -> Result<&U, E>
@@ -172,6 +193,61 @@ impl<T, U> LazyTransform<T, U> {
 				let this = match value.as_ref().unwrap() {
 					ThisOrThat::This(t) => t.clone(),
 					ThisOrThat::That(_) => panic!(), // Can't already be initialized!
+				};
+				*value = Some(ThisOrThat::That(f(this)?));
+				self.initialized.store(true, Ordering::Release);
+			} else {
+				// We raced, and someone else initialized us. We can fall
+				// through now.
+			}
+		}
+
+		// We're initialized, our value is immutable, no synchronization needed.
+		Ok(self.extract().unwrap())
+	}
+
+	/// Try to get a reference to the transformed value, invoking a fallible `f` to
+	/// transform it if the `LazyTransform<T, U>` has yet to be transformed.
+	/// It is guaranteed that if multiple calls to `get_or_create` race, only one
+	/// will invoke its closure, and every call will receive a reference to the
+	/// newly transformed value.
+	///
+	/// The closure can only ever be called once, so think carefully
+	/// about what transformation you want to apply!
+	///
+	/// # Errors
+	///
+	/// Iff this instance is poisoned, *except by panics*, <code>[Err](`Err`)([None])</code> is returned.
+	///
+	/// Iff `f` returns a [`Result::Err`], this error is returned wrapped in [`Some`].
+	///
+	/// # Panics
+	///
+	/// This method will panic if the instance has been poisoned *due to a panic* during a previous transformation attempt.
+	///
+	/// The method **may** panic (or deadlock) upon reentrance.
+	pub fn get_or_create_or_poison<F, E>(&self, f: F) -> Result<&U, Option<E>>
+	where
+		F: FnOnce(T) -> Result<U, E>,
+	{
+		// In addition to being correct, this pattern is vouched for by Hans Boehm
+		// (http://schd.ws/hosted_files/cppcon2016/74/HansWeakAtomics.pdf Page 27)
+		#[allow(clippy::if_not_else)]
+		if !self.initialized.load(Ordering::Acquire) {
+			// We *may* not be initialized. We have to block to be certain.
+			let _lock = self.lock.lock().unwrap();
+			if !self.initialized.load(Ordering::Relaxed) {
+				// Ok, we're definitely uninitialized.
+				// Safe to fiddle with the UnsafeCell now, because we're locked,
+				// and there can't be any outstanding references.
+				//
+				// However, since this function can return early without poisoning `self.lock`,
+				// `self.value` is first overwritten with `None` to mark the instance as poisoned-by-error.
+				let value = unsafe { &mut *self.value.get() };
+				let this = match value.take() {
+					None => return Err(None), // Poisoned by previous error.
+					Some(ThisOrThat::This(t)) => t,
+					Some(ThisOrThat::That(_)) => panic!(), // Can't already be initialized!
 				};
 				*value = Some(ThisOrThat::That(f(this)?));
 				self.initialized.store(true, Ordering::Release);
